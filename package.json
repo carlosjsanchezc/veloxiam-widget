@@ -1,0 +1,7 @@
+{
+  "name": "@veloxiam-widget/amelie-webchat",
+  "version": "1.0.0",
+  "description": "Widget de chat Amelie para embeber en cualquier web",
+  "main": "amelie-webchat.js",
+  "files": ["amelie-webchat.js"]
+}
