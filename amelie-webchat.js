@@ -26,7 +26,7 @@
     ".amelie-wc-close{position:absolute;top:12px;right:12px;width:32px;height:32px;border:none;background:rgba(255,255,255,.2);color:#fff;border-radius:8px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;line-height:1}",
     ".amelie-wc-close:hover{background:rgba(255,255,255,.3)}",
     ".amelie-wc-messages{flex:1;overflow-y:auto;padding:12px;display:flex;flex-direction:column;gap:10px}",
-    ".amelie-wc-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:14px;word-break:break-word}",
+    ".amelie-wc-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:14px;word-break:break-word;white-space:pre-wrap}",
     ".amelie-wc-msg-user{align-self:flex-end;background:#6366f1;color:#fff;border-bottom-right-radius:4px}",
     ".amelie-wc-msg-bot{align-self:flex-start;background:#252540;color:#e2e8f0;border-bottom-left-radius:4px}",
     ".amelie-wc-typing{align-self:flex-start;padding:10px 14px;color:#94a3b8;font-size:13px}",
