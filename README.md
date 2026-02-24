@@ -13,7 +13,6 @@ Script del widget de chat Amelie para embeber en cualquier web (CDN).
 <script>
   AmelieWebchat.init({
     botId: 'uuid-del-bot',
-    token: 'virtualKey-del-bot',
     apiUrl: 'https://api.tudominio.com/api/v1',
     position: 'bottom-right',
     title: 'Chat',
@@ -27,13 +26,13 @@ Script del widget de chat Amelie para embeber en cualquier web (CDN).
 | Parámetro    | Requerido | Descripción                                      |
 |-------------|-----------|--------------------------------------------------|
 | `botId`     | Sí        | UUID del bot                                     |
-| `token`     | Sí        | virtualKey del bot (token de webchat)            |
 | `apiUrl`    | Sí        | Base de la API (ej. `https://api.tudominio.com/api/v1`) |
+| `userId`    | No        | ID del usuario (ej. si tu web ya tiene login). Si no se pasa, se usa un ID anónimo por visitante en `localStorage` (`amelie_wc_` + botId), así cada visitante tiene su propia conversación. |
 | `position`  | No        | `bottom-right`, `bottom-left`, `top-left`, `top-right` (default: `bottom-right`) |
 | `title`     | No        | Título del panel de chat                         |
 | `placeholder` | No     | Placeholder del input                            |
 
 ## API
 
-- `AmelieWebchat.init(config)` — Inicializa el widget. Devuelve `{ open, close, destroy }` o `null` si faltan botId/token.
+- `AmelieWebchat.init(config)` — Inicializa el widget. Devuelve `{ open, close, destroy }` o `null` si falta botId.
 - `AmelieWebchat.destroy()` — Elimina el widget de la página.

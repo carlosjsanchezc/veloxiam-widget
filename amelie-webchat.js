@@ -5,7 +5,6 @@
  *   <script>
  *     AmelieWebchat.init({
  *       botId: 'uuid-del-bot',
- *       token: 'virtualKey-del-bot',
  *       apiUrl: 'https://api.tudominio.com/api/v1',
  *       position: 'bottom-right',
  *       title: 'Chat'
@@ -65,14 +64,28 @@
 
   function createWidget(config) {
     var botId = config.botId || '';
-    var token = config.token || '';
     var apiUrl = (config.apiUrl || '').replace(/\/$/, '');
     var position = config.position || 'bottom-right';
     var title = config.title || 'Chat';
     var placeholder = config.placeholder || 'Escribe un mensaje...';
+    /** ID único por visitante: si la página pasa userId se usa; si no, uno persistente en localStorage por bot */
+    var senderId = config.userId || getOrCreateVisitorId(botId);
 
-    if (!botId || !token) {
-      console.warn('AmelieWebchat: botId y token son requeridos.');
+    function getOrCreateVisitorId(bid) {
+      try {
+        var key = 'amelie_wc_' + (bid || '');
+        var stored = localStorage.getItem(key);
+        if (stored) return stored;
+        var id = 'wc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+        localStorage.setItem(key, id);
+        return id;
+      } catch (e) {
+        return 'wc-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
+      }
+    }
+
+    if (!botId) {
+      console.warn('AmelieWebchat: botId es requerido.');
       return null;
     }
 
@@ -123,7 +136,7 @@
       var payload = {
         botId: botId,
         pregunta: text.trim(),
-        senderId: botId,
+        senderId: senderId,
         mid: mid,
       };
 
@@ -131,7 +144,6 @@
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          Authorization: 'Bearer ' + token,
         },
         body: JSON.stringify(payload),
       })
