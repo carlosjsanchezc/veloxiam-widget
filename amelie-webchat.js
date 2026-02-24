@@ -29,6 +29,7 @@
     ".amelie-wc-msg{max-width:85%;padding:10px 14px;border-radius:14px;font-size:14px;word-break:break-word;white-space:pre-wrap}",
     ".amelie-wc-msg-user{align-self:flex-end;background:#6366f1;color:#fff;border-bottom-right-radius:4px}",
     ".amelie-wc-msg-bot{align-self:flex-start;background:#252540;color:#e2e8f0;border-bottom-left-radius:4px}",
+    ".amelie-wc-msg-human{align-self:flex-start;background:#166534;color:#dcfce7;border-bottom-left-radius:4px;border-left:3px solid #22c55e}",
     ".amelie-wc-typing{align-self:flex-start;padding:10px 14px;color:#94a3b8;font-size:13px}",
     ".amelie-wc-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(255,255,255,.08);background:#1a1a2e}",
     ".amelie-wc-input{flex:1;padding:12px 14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.05);color:#e2e8f0;font-size:15px;outline:none}",
@@ -127,6 +128,7 @@
             role: "assistant",
             content: row.respuesta.trim(),
             id: row.id + "-r",
+            fromHuman: !!row.fromHuman,
           });
         }
       }
@@ -177,7 +179,11 @@
       container.innerHTML = "";
       messages.forEach(function (m) {
         var div = document.createElement("div");
-        div.className = "amelie-wc-msg amelie-wc-msg-" + m.role;
+        var base = "amelie-wc-msg amelie-wc-msg-" + m.role;
+        if (m.role === "assistant" && m.fromHuman)
+          base += " amelie-wc-msg-human";
+        else if (m.role === "assistant") base += " amelie-wc-msg-bot";
+        div.className = base;
         div.textContent = m.content;
         container.appendChild(div);
       });
