@@ -30,6 +30,9 @@
     ".amelie-wc-msg-user{align-self:flex-end;background:#6366f1;color:#fff;border-bottom-right-radius:4px}",
     ".amelie-wc-msg-bot{align-self:flex-start;background:#252540;color:#e2e8f0;border-bottom-left-radius:4px}",
     ".amelie-wc-msg-human{align-self:flex-start;background:#166534;color:#dcfce7;border-bottom-left-radius:4px;border-left:3px solid #22c55e}",
+    ".amelie-wc-msg-content{word-break:break-word;white-space:pre-wrap}",
+    ".amelie-wc-msg-images{margin-top:8px;display:flex;flex-direction:column;gap:6px}",
+    ".amelie-wc-msg-images img{max-width:100%;height:auto;border-radius:8px;display:block}",
     ".amelie-wc-typing{align-self:flex-start;padding:10px 14px;color:#94a3b8;font-size:13px}",
     ".amelie-wc-input-row{display:flex;gap:8px;padding:12px;border-top:1px solid rgba(255,255,255,.08);background:#1a1a2e}",
     ".amelie-wc-input{flex:1;padding:12px 14px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.05);color:#e2e8f0;font-size:15px;outline:none}",
@@ -112,6 +115,31 @@
     var sending = false;
     var pollTimer = null;
 
+    function extractImageLinksFromText(text) {
+      if (!text || !text.trim()) return [];
+      var out = [];
+      var seen = {};
+      var markdownRe = /!\[[^\]]*\]\((https?:\/\/[^)\s]+)\)/gi;
+      var urlRe =
+        /(https?:\/\/[^\s<>"']+\.(?:jpe?g|png|gif|webp|bmp|svg)(?:\?[^\s<>"']*)?)/gi;
+      var m;
+      while ((m = markdownRe.exec(text)) !== null) {
+        var u = m[1].trim();
+        if (u && !seen[u]) {
+          seen[u] = true;
+          out.push(u);
+        }
+      }
+      while ((m = urlRe.exec(text)) !== null) {
+        var u = m[1].trim();
+        if (u && !seen[u]) {
+          seen[u] = true;
+          out.push(u);
+        }
+      }
+      return out;
+    }
+
     function buildMessagesFromList(list) {
       var out = [];
       for (var i = 0; i < list.length; i++) {
@@ -124,11 +152,13 @@
           });
         }
         if (row.respuesta && row.respuesta.trim()) {
+          var resp = row.respuesta.trim();
           out.push({
             role: "assistant",
-            content: row.respuesta.trim(),
+            content: resp,
             id: row.id + "-r",
             fromHuman: !!row.fromHuman,
+            imageLinks: row.imageLinks || extractImageLinksFromText(resp),
           });
         }
       }
@@ -184,7 +214,26 @@
           base += " amelie-wc-msg-human";
         else if (m.role === "assistant") base += " amelie-wc-msg-bot";
         div.className = base;
-        div.textContent = m.content;
+        var contentWrap = document.createElement("div");
+        contentWrap.className = "amelie-wc-msg-content";
+        if (m.content)
+          contentWrap.appendChild(document.createTextNode(m.content));
+        if (m.imageLinks && m.imageLinks.length) {
+          var imgWrap = document.createElement("div");
+          imgWrap.className = "amelie-wc-msg-images";
+          for (var i = 0; i < m.imageLinks.length; i++) {
+            var img = document.createElement("img");
+            img.src = m.imageLinks[i];
+            img.alt = "";
+            img.loading = "lazy";
+            img.onerror = function () {
+              this.style.display = "none";
+            };
+            imgWrap.appendChild(img);
+          }
+          contentWrap.appendChild(imgWrap);
+        }
+        div.appendChild(contentWrap);
         container.appendChild(div);
       });
       container.scrollTop = container.scrollHeight;
@@ -243,6 +292,10 @@
             content:
               (data && data.content && data.content.trim()) ||
               "(Sin respuesta)",
+            imageLinks:
+              data && data.imageLinks && Array.isArray(data.imageLinks)
+                ? data.imageLinks
+                : [],
           });
           renderMessages(messagesEl);
           messagesEl.scrollTop = messagesEl.scrollHeight;
