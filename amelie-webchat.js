@@ -106,8 +106,72 @@
       "amelie-wc-root amelie-wc-pos-" + (posMap[position] || "br");
 
     var askUrl = apiUrl + "/webchat/ask";
+    var messagesUrl = apiUrl + "/webchat/messages";
     var messages = [];
     var sending = false;
+    var pollTimer = null;
+
+    function buildMessagesFromList(list) {
+      var out = [];
+      for (var i = 0; i < list.length; i++) {
+        var row = list[i];
+        if (row.mensaje && row.mensaje.trim()) {
+          out.push({
+            role: "user",
+            content: row.mensaje.trim(),
+            id: row.id + "-u",
+          });
+        }
+        if (row.respuesta && row.respuesta.trim()) {
+          out.push({
+            role: "assistant",
+            content: row.respuesta.trim(),
+            id: row.id + "-r",
+          });
+        }
+      }
+      return out;
+    }
+
+    function fetchAndRenderMessages(messagesEl) {
+      var url =
+        messagesUrl +
+        "?botId=" +
+        encodeURIComponent(botId) +
+        "&senderId=" +
+        encodeURIComponent(senderId);
+      fetch(url, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" },
+      })
+        .then(function (res) {
+          if (!res.ok) return [];
+          return res.json();
+        })
+        .then(function (list) {
+          if (Array.isArray(list) && list.length > 0) {
+            messages = buildMessagesFromList(list);
+            renderMessages(messagesEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+          }
+        })
+        .catch(function () {});
+    }
+
+    function startPolling(messagesEl) {
+      if (pollTimer) return;
+      fetchAndRenderMessages(messagesEl);
+      pollTimer = setInterval(function () {
+        fetchAndRenderMessages(messagesEl);
+      }, 2500);
+    }
+
+    function stopPolling() {
+      if (pollTimer) {
+        clearInterval(pollTimer);
+        pollTimer = null;
+      }
+    }
 
     function renderMessages(container) {
       container.innerHTML = "";
@@ -117,6 +181,7 @@
         div.textContent = m.content;
         container.appendChild(div);
       });
+      container.scrollTop = container.scrollHeight;
     }
 
     function addTyping(container) {
@@ -251,10 +316,16 @@
 
     btn.addEventListener("click", function () {
       panel.classList.toggle("open");
-      if (panel.classList.contains("open")) input.focus();
+      if (panel.classList.contains("open")) {
+        input.focus();
+        startPolling(messagesEl);
+      } else {
+        stopPolling();
+      }
     });
     closeBtn.addEventListener("click", function () {
       panel.classList.remove("open");
+      stopPolling();
     });
 
     document.body.appendChild(root);
