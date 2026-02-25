@@ -1,6 +1,7 @@
 /**
  * Amelie Webchat Widget - Script para embeber en cualquier web (CDN).
  * Uso:
+ *   <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
  *   <script src="https://tu-cdn.com/veloxiam-widget/amelie-webchat.js"></script>
  *   <script>
  *     AmelieWebchat.init({
@@ -10,6 +11,7 @@
  *       title: 'Chat'
  *     });
  *   </script>
+ * Con Socket.IO cargado, el widget recibe mensajes en tiempo real por WebSocket (namespace /webchat).
  */
 (function (global) {
   "use strict";
@@ -114,6 +116,8 @@
     var messages = [];
     var sending = false;
     var pollTimer = null;
+    var socket = null;
+    var wsBase = apiUrl.replace(/\/api\/v\d+$/, "").replace(/^http/, "ws");
 
     function extractImageLinksFromText(text) {
       if (!text || !text.trim()) return [];
@@ -191,12 +195,43 @@
         .catch(function () {});
     }
 
+    function connectWebSocket(messagesEl) {
+      if (typeof io === "undefined") return;
+      if (socket && socket.connected) return;
+      try {
+        socket = io(wsBase + "/webchat", { transports: ["websocket"] });
+        socket.on("connect", function () {
+          socket.emit("subscribe", { botId: botId, senderId: senderId });
+        });
+        socket.on("webchat:messages", function (list) {
+          if (Array.isArray(list) && list.length >= 0) {
+            messages = buildMessagesFromList(list);
+            renderMessages(messagesEl);
+            messagesEl.scrollTop = messagesEl.scrollHeight;
+          }
+        });
+        socket.on("disconnect", function () {});
+      } catch (e) {
+        console.warn("AmelieWebchat: WebSocket failed", e);
+      }
+    }
+
+    function disconnectWebSocket() {
+      if (socket) {
+        socket.emit("unsubscribe", { botId: botId, senderId: senderId });
+        socket.removeAllListeners();
+        socket.disconnect();
+        socket = null;
+      }
+    }
+
     function startPolling(messagesEl) {
-      if (pollTimer) return;
       fetchAndRenderMessages(messagesEl);
+      connectWebSocket(messagesEl);
+      if (pollTimer) return;
       pollTimer = setInterval(function () {
         fetchAndRenderMessages(messagesEl);
-      }, 2500);
+      }, 5000);
     }
 
     function stopPolling() {
@@ -204,6 +239,7 @@
         clearInterval(pollTimer);
         pollTimer = null;
       }
+      disconnectWebSocket();
     }
 
     function renderMessages(container) {
