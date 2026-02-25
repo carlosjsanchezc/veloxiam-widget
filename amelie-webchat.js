@@ -158,7 +158,8 @@
             content: resp,
             id: row.id + "-r",
             fromHuman: !!row.fromHuman,
-            imageLinks: row.imageLinks || extractImageLinksFromText(resp),
+            imageLinks:
+              row.imagenes || row.imageLinks || extractImageLinksFromText(resp),
           });
         }
       }
