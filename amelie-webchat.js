@@ -155,15 +155,19 @@
             id: row.id + "-u",
           });
         }
-        if (row.respuesta && row.respuesta.trim()) {
-          var resp = row.respuesta.trim();
+        var hasResponseText = row.respuesta && row.respuesta.trim();
+        var hasResponseImages = row.imagenes && row.imagenes.length > 0;
+        if (hasResponseText || hasResponseImages) {
+          var resp = hasResponseText ? row.respuesta.trim() : "";
           out.push({
             role: "assistant",
             content: resp,
             id: row.id + "-r",
             fromHuman: !!row.fromHuman,
             imageLinks:
-              row.imagenes || row.imageLinks || extractImageLinksFromText(resp),
+              row.imagenes ||
+              row.imageLinks ||
+              (hasResponseText ? extractImageLinksFromText(resp) : []),
           });
         }
       }
@@ -259,6 +263,10 @@
           var imgWrap = document.createElement("div");
           imgWrap.className = "amelie-wc-msg-images";
           for (var i = 0; i < m.imageLinks.length; i++) {
+            var a = document.createElement("a");
+            a.href = m.imageLinks[i];
+            a.target = "_blank";
+            a.rel = "noopener";
             var img = document.createElement("img");
             img.src = m.imageLinks[i];
             img.alt = "";
@@ -266,7 +274,8 @@
             img.onerror = function () {
               this.style.display = "none";
             };
-            imgWrap.appendChild(img);
+            a.appendChild(img);
+            imgWrap.appendChild(a);
           }
           contentWrap.appendChild(imgWrap);
         }
